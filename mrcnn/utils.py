@@ -503,9 +503,9 @@ def resize_mask(mask, scale, padding, crop=None):
     """
     # Suppress warning from scipy 0.13.0, the output shape of zoom() is
     # calculated with round() instead of int()
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        mask = scipy.ndimage.zoom(mask, zoom=[scale, scale, 1], order=0)
+    #with warnings.catch_warnings():
+        #warnings.simplefilter("ignore")
+        #mask = scipy.ndimage.zoom(mask, zoom=[scale, scale, 1], order=0)
     if crop is not None:
         y, x, h, w = crop
         mask = mask[y:y + h, x:x + w]
@@ -530,7 +530,7 @@ def minimize_mask(bbox, mask, mini_shape):
             raise Exception("Invalid bounding box with area of zero")
         # Resize with bilinear interpolation
         m = resize(m, mini_shape)
-        mini_mask[:, :, i] = np.around(m).astype(np.bool)
+        mini_mask[:, :, i] = np.around(m).astype(np.bool_)
     return mini_mask
 
 
@@ -548,7 +548,7 @@ def expand_mask(bbox, mini_mask, image_shape):
         w = x2 - x1
         # Resize with bilinear interpolation
         m = resize(m, (h, w))
-        mask[y1:y2, x1:x2, i] = np.around(m).astype(np.bool)
+        mask[y1:y2, x1:x2, i] = np.around(m).astype(np.bool_)
     return mask
 
 
@@ -568,10 +568,10 @@ def unmold_mask(mask, bbox, image_shape):
     threshold = 0.5
     y1, x1, y2, x2 = bbox
     mask = resize(mask, (y2 - y1, x2 - x1))
-    mask = np.where(mask >= threshold, 1, 0).astype(np.bool)
+    mask = np.where(mask >= threshold, 1, 0).astype(np.bool_)
 
     # Put the mask in the right location.
-    full_mask = np.zeros(image_shape[:2], dtype=np.bool)
+    full_mask = np.zeros(image_shape[:2], dtype=np.bool_)
     full_mask[y1:y2, x1:x2] = mask
     return full_mask
 
@@ -896,14 +896,13 @@ def resize(image, output_shape, order=1, mode='constant', cval=0, clip=True,
     if LooseVersion(skimage.__version__) >= LooseVersion("0.14"):
         # New in 0.14: anti_aliasing. Default it to False for backward
         # compatibility with skimage 0.13.
-        return skimage.transform.resize(
-            image, output_shape,
+        return skimage.util.img_as_bool(skimage.transform.resize(
+            image.astype(np.uint32), output_shape,
             order=order, mode=mode, cval=cval, clip=clip,
             preserve_range=preserve_range, anti_aliasing=anti_aliasing,
-            anti_aliasing_sigma=anti_aliasing_sigma)
+            anti_aliasing_sigma=anti_aliasing_sigma))
     else:
         return skimage.transform.resize(
             image, output_shape,
             order=order, mode=mode, cval=cval, clip=clip,
             preserve_range=preserve_range)
-    
